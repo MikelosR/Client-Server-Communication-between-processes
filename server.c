@@ -48,8 +48,7 @@ int main(int argc, char *argv[]){
             if (fp == NULL){
                 printf("Server: Wrong file name %s. Safe EXIT\n",argv[2]);
                 strcpy(dis_serv->line,"exit");
-                if(sem_post(&dis_serv->sem1_wait_dispatcher) == -1)
-                    errExit("sem_post dispatcher");
+                if(sem_post(&dis_serv->sem1_wait_dispatcher) == -1) errExit("sem_post dispatcher to dispatcher");
                 remove("/tmp/server_on.txt");
                 exit(EXIT_FAILURE);
             }
@@ -66,29 +65,25 @@ int main(int argc, char *argv[]){
                 if (current_line == num_line){
                     keep_reading = false;
                     find = true;
-                    //printf("Line: %s\n", dis_serv->line);
                     //wake up dispatcher
-                    if (sem_post(&dis_serv->sem1_wait_dispatcher) == -1)
-                        errExit("sem_post dispatcher");
+                    if (sem_post(&dis_serv->sem1_wait_dispatcher) == -1) errExit("sem_post server to dispatcher");
                 }
                 //if we've reached the end of the file, we didn't find the line
                 if (feof(fp) && !find){
                     keep_reading = false;
                     strcpy(dis_serv->line,"no");
                     //wake up dispatcher
-                    if (sem_post(&dis_serv->sem1_wait_dispatcher) == -1)
-                        errExit("sem_post dispatcher");
+                    if (sem_post(&dis_serv->sem1_wait_dispatcher) == -1) errExit("sem_post server to dispatcher");
                 }
                 current_line++;
 
             } while (keep_reading);
             fclose(fp);
         }
-        
     }
-    //wake up dispatcher
-    if (sem_post(&dis_serv->sem1_wait_dispatcher) == -1)
-        errExit("sem_post dispatcher");
+    
+    //wake up dispatcher, the program will terminate
+    if (sem_post(&dis_serv->sem1_wait_dispatcher) == -1) errExit("sem_post dispatcher to dispatcher");
 
     remove("/tmp/server_on.txt");
     exit(EXIT_SUCCESS);

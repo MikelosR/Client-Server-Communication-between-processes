@@ -9,10 +9,10 @@ int main(int argc, char *argv[]){
     pid_t server_pid;
 
     if (argc != 4) {
-        fprintf(stderr, "Usage: %s /shm-path\n", argv[0]);
+        fprintf(stderr, "Usage: %s /shm-path \"file_name\"\n", argv[0]);
         exit(EXIT_FAILURE);
     }
-
+    //if server file exists, delete it and try again
     if (access("/tmp/server_on.txt", 0) == 0) {
         printf("Server is ON\n");
         printf("The file /tmp/server_on.txt deleted, try again to run the dispatcher\n");
@@ -64,6 +64,7 @@ int main(int argc, char *argv[]){
     
     //Empty buffers and ints
     cl_dis->line_num = 0;
+    cl_dis->client_pid = 0;
     dis_serv->line_num = 0;
     memset(cl_dis->line,0,strlen(cl_dis->line));
     memset(dis_serv->line,0,strlen(dis_serv->line));
@@ -72,7 +73,8 @@ int main(int argc, char *argv[]){
     close(fd2);
 
     /* Initialize semaphores as process-shared, with value 0. */
-    if (sem_init(&cl_dis->sem1_wait_client, 1, 0) == -1)
+    //initialize sem1_wait_client to 1
+    if (sem_init(&cl_dis->sem1_wait_client, 1, 1) == -1)
         errExit("sem_init-sem1 client-dispatcher");
     if (sem_init(&cl_dis->sem2_wait_dispatcher, 1, 0) == -1)
         errExit("sem_init-sem2 client-dispatcher");
@@ -81,13 +83,10 @@ int main(int argc, char *argv[]){
         errExit("sem_init-sem1 dispatcher-server");
     if (sem_init(&dis_serv->sem2_wait_server, 1, 0) == -1)
         errExit("sem_init-sem2 dispatcher-server");
-
+    
     bool not_exit = true;
     while(not_exit){
         printf("-Dispatcher: I am waiting the customer to type line number\n");
-        //granted access to the client in shm1
-        if (sem_post(&cl_dis->sem1_wait_client) == -1)
-        errExit("sem_post client");
 
         /* Wait client to add the line number that it wants. */
         if (sem_wait(&cl_dis->sem2_wait_dispatcher) == -1)
