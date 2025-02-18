@@ -8,7 +8,7 @@ client και server, η οποία λαμβάνει τον αριθμό γρα�
 στον server, μέσω 2ης shared memory μεταξύ dispatcher - server τώρα
 τον αριθμό γραμμής που δέχτηκε από τον client και περιμένει απάντηση
 (το περιεχόμενο της γραμμής) από τον server ώστε να το διαβιβάσει
-στην shared memory εαξύ client - dispatcher.
+στην shared memory μεταξύ client - dispatcher.
 3) Το αρχείο server.c που λαμβάνει τον αριθμό γραμμής (που ζητάει ο 
 client) από την shared memory μεταξύ dispatcher - server και επιστρέφει
 την γραμμή από το αρχείο στον dispatcher (shared memory) εφόσον υπάρχει.
