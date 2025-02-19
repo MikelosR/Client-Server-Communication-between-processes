@@ -29,7 +29,7 @@ int main(int argc, char *argv[]){
 
     //Wait for access in shm1
     if (sem_wait(&cl_dis->sem1_wait_client) == -1) errExit("sem_post");
-    
+
     //check if the program has terminated
     if(strcmp(cl_dis->line,"exit") == 0){
         printf("Program has terminated, safe exit for client with process id: %d\n", getpid());
@@ -37,31 +37,18 @@ int main(int argc, char *argv[]){
         exit(EXIT_SUCCESS);
     }
 
-    while(cl_dis->client_pid != 0){
-        printf("Wrong client-----\n");
-        //wrong client, post the semaphore for the "next" client
-        if (sem_post(&cl_dis->sem1_wait_client) == -1) errExit("sem_post client");
-
-        if (sem_wait(&cl_dis->sem1_wait_client) == -1) errExit("sem_wait client");
-
-        //check again, if the program has terminated
-        if(strcmp(cl_dis->line,"exit") == 0){
-            printf("Program has terminated, safe exit for client with process id: %d\n", getpid());
-            if (sem_post(&cl_dis->sem1_wait_client) == -1) errExit("sem_post client");
-            exit(EXIT_SUCCESS);
-        }
-    }
     start = clock();
     cl_dis->line_num = num_line;
     cl_dis->client_pid = getpid();
-    printf("Client with pid: %d send a request\n",cl_dis->client_pid);
+    printf("Client with pid: %d send the request line: %ld\n",cl_dis->client_pid, num_line);
     
     /*Wake up dispatcher!*/
-    if (sem_post(&cl_dis->sem2_wait_dispatcher) == -1) errExit("sem_post client");
+    if (sem_post(&cl_dis->sem2_wait_dispatcher) == -1) errExit("sem_post client sem2_wait_dispatcher");
+
+    //Wait for access in shm1. wait here for response
+    if (sem_wait(&cl_dis->sem3_client_response) == -1) errExit("sem_post client sem3_client_response");
     
-    //Wait to take back the content of the line
-    if (sem_wait(&cl_dis->sem1_wait_client) == -1) errExit("sem_wait client");
-    
+    //If server send no, means there is no this line
     if(strcmp(cl_dis->line,"no") == 0){
         printf("Server couldn't find line %ld.\n", num_line);
     }
@@ -71,12 +58,10 @@ int main(int argc, char *argv[]){
     else{
         printf("Client: %s\n",cl_dis->line);
     }
+
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     printf("client took %f seconds to execute \n", cpu_time_used);
-
-    //restart the client_pid for the next client
-    cl_dis->client_pid = 0;
     //post the semaphore for the next client
     if (sem_post(&cl_dis->sem1_wait_client) == -1) errExit("sem_post client");
 

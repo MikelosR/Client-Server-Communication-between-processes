@@ -76,9 +76,13 @@ int main(int argc, char *argv[]){
     //initialize sem1_wait_client to 1
     if (sem_init(&cl_dis->sem1_wait_client, 1, 1) == -1)
         errExit("sem_init-sem1 client-dispatcher");
+    //initialize sem_init-sem3 client Response to 0
+    if (sem_init(&cl_dis->sem3_client_response, 1, 0) == -1)
+        errExit("sem_init-sem3 client Response");
+    
     if (sem_init(&cl_dis->sem2_wait_dispatcher, 1, 0) == -1)
         errExit("sem_init-sem2 client-dispatcher");
-
+    //Dispatcher - Server semaphores
     if (sem_init(&dis_serv->sem1_wait_dispatcher, 1, 0) == -1)
         errExit("sem_init-sem1 dispatcher-server");
     if (sem_init(&dis_serv->sem2_wait_server, 1, 0) == -1)
@@ -88,9 +92,9 @@ int main(int argc, char *argv[]){
     while(not_exit){
         printf("-Dispatcher: I am waiting the customer to type line number\n");
 
-        /* Wait client to add the line number that it wants. */
+        /* Wait dispatcher the client to add the line number. */
         if (sem_wait(&cl_dis->sem2_wait_dispatcher) == -1)
-            errExit("sem_wait client");
+            errExit("sem_wait dispatcher");
         
         printf("-Dispatcher: Client wants the line %ld\n",cl_dis->line_num);
 
@@ -111,11 +115,12 @@ int main(int argc, char *argv[]){
         //if server wrote exit, dispatcher exit
         if(strcmp(dis_serv->line,"exit") == 0) not_exit = false;
 
-        /*Wake up client*/
-        if(sem_post(&cl_dis->sem1_wait_client) == -1)
-            errExit("sem_post client");
+        /*Wake up the client waiting for the response*/
+        if(sem_post(&cl_dis->sem3_client_response) == -1)
+            errExit("sem_post sem3_client_response");
     }
-
+    //Sleep for 1 sec before delete the shared memory so that terminate the processes waiting on the semaphore
+    sleep(1);
     shm_unlink(shmpath1);
     shm_unlink(shmpath2);
     exit(EXIT_SUCCESS);

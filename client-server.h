@@ -16,7 +16,8 @@
 
 struct shm_cl_dis {
     sem_t  sem1_wait_client;
-    sem_t  sem2_wait_dispatcher;              
+    sem_t  sem2_wait_dispatcher;
+    sem_t  sem3_client_response;           
     size_t line_num;         /* The line that we need*/       
     char   line[BUF_SIZE];   /* Data being transferred */
     pid_t client_pid;
